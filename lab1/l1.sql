@@ -49,13 +49,13 @@ VALUES 	('Пациент 1', 'm', NOW(), '1234567890123456', 'AWESOME ADDRESS', 
 /* --3. Отношение "Визиты к врачу" (поля "Врач", "Пациент", "Дата и время визита", "Диагноз"). */
 CREATE TABLE visit_to_doc (
 	id SERIAL PRIMARY KEY,
-	doc INT NOT NULL REFERENCES doc (id),
-	pat INT NOT NULL REFERENCES pat (id),
+	doctor INT NOT NULL REFERENCES doc (id),
+	patient INT NOT NULL REFERENCES pat (id),
 	visit_time TIMESTAMP NOT NULL,
 	diagnosis VARCHAR(100)
 );
 
-INSERT INTO visit_to_doc (doc, pat, visit_time, diagnosis)
+INSERT INTO visit_to_doc (doctor, patient, visit_time, diagnosis)
 VALUES 	(1, 1, NOW(), 'Laziness'),
 		(1, 2, CURRENT_TIMESTAMP, 'Parkinson'),
 		(1, 2, TO_TIMESTAMP('02/08/2017 10:59:00', 'MM/DD/YYYY HH24:MI:SS'), 'Parkinson');
