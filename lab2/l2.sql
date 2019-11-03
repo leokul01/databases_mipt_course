@@ -28,7 +28,8 @@ SELECT COUNT(*)
 FROM visit_to_doc
 WHERE 
     diagnosis IN ('ОРЗ', 'ОРВИ', 'грипп')
-    AND ABS(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - visit_time))) < 7 * 24 * 60 * 60;
+    AND EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - visit_time)) < 7 * 24 * 60 * 60
+    AND EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - visit_time)) > 0;
 
 
 -- Создать упорядоченные списки:
