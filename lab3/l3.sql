@@ -53,13 +53,21 @@ UPDATE clinic_spec
 -- Представление "Пациенты врачей-хирургов".
 
 CREATE OR REPLACE VIEW sur_pats(patient, surgeon, visit_time, diagnosis)
-    AS SELECT DISTINCT p.name, d.name, v.visit_time, v.diagnosis
+    AS SELECT p.name, d.name, v.visit_time, v.diagnosis
     FROM visit_to_doc v, doc d, pat p
     WHERE 
         d.post = 'Хирург'
         AND v.doctor = d.id
         AND v.patient = p.id;
--- добавьте сюда дату визита и диагноз, и попробуйте изменить диагноз (- Что значит изменить диагноз? Не понял.)
+-- добавьте сюда дату визита и диагноз, 
+-- и попробуйте изменить диагноз
+
+UPDATE sur_pats
+    SET diagnosis = 'URURU'
+    WHERE diagnosis = 'Parkinson';
+
+-- ERROR:  cannot update view "sur_pats"
+-- DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 
 INSERT INTO sur_pats(patient, surgeon)
     VALUES ('Шарик', 'Филипп Филиппович Преображенский');
@@ -72,8 +80,7 @@ UPDATE sur_pats
     WHERE patient IN ('Шарик', 'Треугольник', 'Квадратик');
 
 -- ERROR:  cannot update view "sur_pats"
--- DETAIL:  Views containing DISTINCT are not automatically updatable.
---+
+-- DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 
 -- Представление "Загруженность врачей разных специализаций": 
 -- специализация – количество пациентов.
@@ -81,9 +88,11 @@ UPDATE sur_pats
 CREATE OR REPLACE VIEW load_spec(specialization, number_of_patients)
     AS SELECT d.spec, COUNT(DISTINCT v.patient)
     FROM doc d, visit_to_doc v
-    WHERE v.doctor = d.id AND v.patient IN (SELECT id FROM pat)
+    WHERE v.doctor = d.id AND v.patient IS NOT NULL
     GROUP BY d.spec;
 -- здесь еще надо проверять, что визит состоялся (т.е. пациент есть) +
+-- неверно: v.patient is null (это необязательный внешний ключ: он не может не входить в (SELECT id FROM pat),
+-- но может быть неопределнным (т.е. прием по расписанию есть, но на него никто не записался).
 
 INSERT INTO load_spec(specialization, number_of_patients)
     VALUES ('Психические заболевания', 15);
