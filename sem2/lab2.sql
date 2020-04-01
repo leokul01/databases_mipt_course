@@ -29,23 +29,28 @@ create or replace procedure current_schedule is
         from VISIT_TO_DOC v join PAT p on v.PATIENT = p.ID
         where v.DOCTOR = doc_id and trunc(v.VISIT_TIME) = trunc(cur_date)
         order by v.VISIT_TIME desc;
+
+    flag boolean := false;
+    NO_VISITS exception;
 begin
     DBMS_OUTPUT.PUT_LINE(trunc(sysdate));
-    for p in popular_doctors(sysdate)
-        loop
-            DBMS_OUTPUT.PUT_LINE(SHORTEN_NAME(p.doc_name));
-            for v in visits(p.doc_id, sysdate)
-                loop
-                    DBMS_OUTPUT.PUT_LINE(to_char(v.visit_time, 'HH24:MI') || ', '
-                                             || SHORTEN_NAME(v.pat_name) || ', '
-                                             || v.pat_addr);
-                end loop;
-        end loop;
+    for p in popular_doctors(sysdate) loop
+        DBMS_OUTPUT.PUT_LINE(SHORTEN_NAME(p.doc_name));
+        for v in visits(p.doc_id, sysdate)
+            loop
+                flag := true;
+                DBMS_OUTPUT.PUT_LINE(to_char(v.visit_time, 'HH24:MI') || ', '
+                                         || SHORTEN_NAME(v.pat_name) || ', '
+                                         || v.pat_addr);
+            end loop;
+    end loop;
+    if not flag then
+        raise NO_VISITS;
+    end if;
 exception
-    when NO_DATA_FOUND then
+    when NO_VISITS then
         DBMS_OUTPUT.PUT_LINE('Приемов на текующую дату нету.');
 end;
-
 
 -- 2. Процедура, выдающая по специализации врача и дате список незанятых приемов.
 /*
@@ -70,22 +75,26 @@ create or replace procedure get_free_visits(spec DOC.spec%TYPE, dat date) is
         from VISIT_TO_DOC v
         where v.DOCTOR = doc_id and trunc(v.VISIT_TIME) = trunc(dat) and v.PATIENT is null
         order by v.VISIT_TIME desc;
+
+    flag boolean := false;
+    NO_VISITS exception;
 begin
     DBMS_OUTPUT.PUT_LINE(spec);
-    for d in available_doctors(spec, dat)
-        loop
-            DBMS_OUTPUT.PUT_LINE(SHORTEN_NAME(d.doc_name));
-            for v in free_visits(d.doc_id, dat)
-                loop
-                    DBMS_OUTPUT.PUT_LINE(to_char(v.begin_time, 'HH24:MI') || ', '
-                                             || to_char(v.end_time, 'HH24:MI'));
-                end loop;
+    for d in available_doctors(spec, dat) loop
+        DBMS_OUTPUT.PUT_LINE(SHORTEN_NAME(d.doc_name));
+        for v in free_visits(d.doc_id, dat) loop
+            flag := true;
+            DBMS_OUTPUT.PUT_LINE(to_char(v.begin_time, 'HH24:MI') || ', '
+                                     || to_char(v.end_time, 'HH24:MI'));
         end loop;
+    end loop;
+    if not flag then
+        raise NO_VISITS;
+    end if;
 exception
-    when NO_DATA_FOUND then
+    when NO_VISITS then
         DBMS_OUTPUT.PUT_LINE('Незанятых приемов нету.');
 end;
-
 
 -- 3. Процедура, определяющая наступление эпидемии.
 /*
@@ -114,7 +123,7 @@ begin
         end if;
     end loop;
 end;
-
+--+
 begin
     current_schedule();
     get_free_visits('Конечности', sysdate);
