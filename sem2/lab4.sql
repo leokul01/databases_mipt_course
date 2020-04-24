@@ -19,7 +19,7 @@ create or replace procedure parse_fio(table_name string, fio_field string, sur_f
     row_id string(20);
     cur sys_refcursor;
     query string(300);
-    sur_name string(100);
+    surname string(100);
     name string(100);
     patronymic string(100);
 begin
@@ -34,11 +34,11 @@ begin
             execute immediate query using row_id, fio;
         else
             -- Parse fio and fill atom values within row
-            sur_name := regexp_substr(fio, '^\w+');
+            surname := regexp_substr(fio, '^\w+');
             name := regexp_substr(fio, ' \w+ ');
             patronymic := regexp_substr(fio, ' \w+$');
             query := 'update ' || table_name || ' set ' || sur_field || ' = :1, ' || name_field || ' = :2, ' || pat_field || ' = :3 where ROWID = :4';
-            execute immediate query using sur_name, name, patronymic, row_id;
+            execute immediate query using surname, name, patronymic, row_id;
         end if;
     end loop;
     close cur;
